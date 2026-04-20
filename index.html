@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Broadway — PMO Dashboard</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px;scroll-behavior:smooth}
+body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:#f0ede8;color:#1a1a18;min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* LAYOUT */
+.app{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;min-height:100vh}
+
+/* HEADER */
+.hdr{background:#0D1B2A;padding:18px 28px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.hdr-left{display:flex;flex-direction:column;gap:6px}
+.badges{display:flex;gap:6px;flex-wrap:wrap}
+.badge{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:3px}
+.bg-gold{background:#C9A84C;color:#0D1B2A}
+.bg-navy{background:#1a3a5c;color:#8bb8d4}
+.bg-green{background:#2E7D55;color:#fff}
+.bg-red{background:#7a1a1a;color:#ffb8b8}
+.hdr-title{font-size:24px;font-weight:700;color:#F5F0E8;letter-spacing:-.03em;line-height:1.1}
+.hdr-sub{font-size:12px;color:#8A9BB0}
+.hdr-meta{display:flex;gap:20px;flex-wrap:wrap}
+.meta{text-align:right}
+.ml{font-size:9px;color:#8A9BB0;text-transform:uppercase;letter-spacing:.08em}
+.mv{font-size:13px;color:#EDD98A;font-weight:700;margin-top:2px}
+
+/* BANNER */
+.banner{background:#fdf3e3;border-bottom:3px solid #f0c878;padding:9px 28px;font-size:12px;color:#7a4e0a;line-height:1.5}
+
+/* TABS */
+.tabs{background:#fff;border-bottom:1px solid #ddd;padding:0 28px;overflow-x:auto;display:flex;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.tabs::-webkit-scrollbar{height:3px}
+.tabs::-webkit-scrollbar-thumb{background:#C9A84C;border-radius:2px}
+.tab{font-family:inherit;font-size:13px;color:#777;background:none;border:none;border-bottom:3px solid transparent;padding:12px 15px 10px;cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s;margin-bottom:-1px}
+.tab:hover{color:#1a1a18}
+.tab.on{color:#0D1B2A;border-bottom-color:#C9A84C;font-weight:700}
+
+/* PANELS */
+.panel{display:none;padding:22px 28px 36px;animation:fadein .2s ease}
+.panel.on{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* SECTION LABEL */
+.sl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#999;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #e5e2dc}
+
+/* CARD */
+.card{background:#fff;border:1px solid #e5e2dc;border-radius:10px;padding:16px 18px}
+.ct{font-size:13px;font-weight:700;color:#1a1a18;margin-bottom:3px}
+.cs{font-size:11px;color:#999;margin-bottom:10px}
+
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:960px){.g3{grid-template-columns:1fr 1fr}.g4{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.g2,.g3,.g4{grid-template-columns:1fr}.hdr-meta{display:none}}
+
+/* KPI */
+.kgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+@media(max-width:700px){.kgrid{grid-template-columns:1fr 1fr}}
+.kpi{background:#fff;border:1px solid #e5e2dc;border-radius:10px;padding:14px 16px}
+.kl{font-size:11px;color:#999;margin-bottom:6px}
+.kv{font-size:24px;font-weight:700;color:#1a1a18;line-height:1}
+.ks{font-size:11px;color:#999;margin-top:5px}
+
+/* INLINE BADGES */
+.ib{display:inline-flex;align-items:center;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.ib-r{background:#fceaea;color:#a32020}
+.ib-a{background:#fdf3e3;color:#8a5a10}
+.ib-g{background:#eaf3e4;color:#2a6e30}
+.ib-b{background:#e8f0fb;color:#1a5fa8}
+.ib-x{background:#f3f2f0;color:#777;border:1px solid #e5e2dc}
+.ib-o{background:#F5ECC8;color:#7a5a0a}
+
+/* TASK LIST */
+.tlist{list-style:none}
+.ti{display:flex;align-items:flex-start;gap:9px;padding:6px 0;border-bottom:1px solid #f5f2ee;font-size:12px;line-height:1.4}
+.ti:last-child{border-bottom:none}
+.tx{flex:1;color:#1a1a18}
+.td{font-size:10px;color:#999;white-space:nowrap;margin-left:4px;margin-top:1px}
+
+/* ALERTS */
+.al{border-radius:10px;padding:13px 16px;margin-bottom:14px}
+.al-ok{background:#eaf3e4;border:1px solid #a8d8a8}
+.al-ok .ah{color:#2a6e30}.al-ok .am{color:#2a6e30}
+.al-w{background:#fdf3e3;border:1px solid #f0c878}
+.al-w .ah{color:#8a5a10}.al-w .am{color:#8a5a10}
+.al-d{background:#fceaea;border:1px solid #f0a8a8}
+.al-d .ah{color:#a32020}.al-d .am{color:#a32020}
+.al-i{background:#e8f0fb;border:1px solid #a8c8f0}
+.al-i .ah{color:#1a5fa8}.al-i .am{color:#1a5fa8}
+.ah{font-size:12px;font-weight:700;margin-bottom:5px}
+.am{font-size:12px;line-height:1.6}
+
+.sec{margin-bottom:22px}
+.div{height:1px;background:#e5e2dc;margin:14px 0}
+
+/* TABLE */
+.tw{background:#fff;border:1px solid #e5e2dc;border-radius:10px;overflow:hidden;margin-bottom:18px}
+.rt{width:100%;border-collapse:collapse;font-size:12px}
+.rt th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#999;text-align:left;padding:8px 12px;border-bottom:1px solid #e5e2dc;background:#faf9f7}
+.rt td{padding:9px 12px;border-bottom:1px solid #f5f2ee;vertical-align:top}
+.rt tr:last-child td{border-bottom:none}
+.rt tr.hl td{background:#fffdf5}
+
+/* TIMELINE */
+.tl{position:relative;padding-left:26px}
+.tl-ln{position:absolute;left:9px;top:8px;bottom:8px;width:1px;background:#e5e2dc}
+.tl-it{position:relative;margin-bottom:16px}
+.tl-dot{position:absolute;left:-21px;top:5px;width:11px;height:11px;border-radius:50%;border:2px solid #f0ede8}
+.d-go{background:#C9A84C}.d-rd{background:#C13B3B}.d-am{background:#C97A20}.d-gn{background:#2E7D55}.d-gy{background:#aaa}
+.tl-d{font-size:10px;color:#999;margin-bottom:2px;text-transform:uppercase;letter-spacing:.08em}
+.tl-e{font-size:13px;font-weight:700;color:#1a1a18}
+.tl-x{font-size:12px;color:#666;margin-top:4px;line-height:1.5}
+
+/* EMAIL */
+.ew{background:#fff;border:1px solid #e5e2dc;border-radius:10px;overflow:hidden;margin-bottom:18px}
+.eh{background:#faf9f7;padding:11px 16px;border-bottom:1px solid #e5e2dc;display:flex;align-items:center;justify-content:space-between}
+.et{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#999}
+.eb{padding:18px 16px;font-size:12px;line-height:1.8;color:#1a1a18;white-space:pre-wrap;font-family:'Segoe UI',sans-serif}
+.cbtn{font-size:11px;color:#666;background:#fff;border:1px solid #e5e2dc;border-radius:6px;padding:5px 12px;cursor:pointer;font-family:inherit;transition:all .15s}
+.cbtn:hover{background:#f0ede8;border-color:#ccc;color:#1a1a18}
+.cbtn.ok{background:#eaf3e4;border-color:#a8d8a8;color:#2a6e30}
+
+/* CHECKLIST */
+.cl{display:flex;align-items:flex-start;gap:11px;padding:9px 0;border-bottom:1px solid #f5f2ee;cursor:pointer;user-select:none;transition:background .1s;border-radius:4px}
+.cl:last-child{border-bottom:none}
+.cl:hover{background:#faf9f7}
+.cb2{width:17px;height:17px;border-radius:5px;border:2px solid #ccc;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.cb2.on{background:#2a6e30;border-color:#2a6e30}
+.ck{display:none;color:#fff;font-size:11px;font-weight:900;line-height:1}
+.cb2.on .ck{display:block}
+.clt{font-size:12px;color:#1a1a18;line-height:1.5;flex:1}
+.clt.dn{text-decoration:line-through;color:#bbb}
+.cp{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;flex-shrink:0;margin-top:2px;text-transform:uppercase}
+.cp-h{background:#fceaea;color:#a32020}
+.cp-m{background:#fdf3e3;color:#8a5a10}
+.cp-l{background:#f3f2f0;color:#777}
+.cp-n{background:#F5ECC8;color:#7a5a0a}
+#prog{font-size:12px;color:#999;font-weight:500}
+
+/* PERSON CARD */
+.pc{background:#fff;border:1px solid #e5e2dc;border-radius:10px;padding:12px 14px;display:flex;gap:11px;align-items:flex-start}
+.pc.lep{border-left:4px solid #C9A84C;border-radius:0 10px 10px 0}
+.pc.anchor{border:2px solid #a8c8f0}
+.av{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800}
+.av-gd{background:#F5ECC8;color:#7a5a0a}
+.av-bl{background:#e8f0fb;color:#1a5fa8}
+.av-tl{background:#D1EDE3;color:#1B5E42}
+.av-co{background:#FAECEA;color:#7D2E1E}
+.av-sl{background:#f3f2f0;color:#777;border:1px solid #e5e2dc}
+.av-am{background:#FAEEDA;color:#633806}
+.av-gn{background:#EAF3DE;color:#27500A}
+.av-pu{background:#EEEDFE;color:#3C3489}
+.pn{font-size:12px;font-weight:700;color:#1a1a18;line-height:1.3}
+.pr{font-size:11px;color:#777;margin-top:2px;line-height:1.4}
+.pt{display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;margin-top:5px;letter-spacing:.04em;text-transform:uppercase}
+.t-lep{background:#F5ECC8;color:#7a5a0a}
+.t-usi{background:#e8f0fb;color:#1a5fa8}
+.t-new{background:#eaf3e4;color:#2a6e30}
+.t-abs{background:#fdf3e3;color:#8a5a10}
+.t-cor{background:#fceaea;color:#a32020}
+
+/* TAGS */
+.nt{background:#F5ECC8;color:#7a5a0a;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:5px;text-transform:uppercase;letter-spacing:.05em;vertical-align:middle}
+.ut{background:#e8f0fb;color:#1a5fa8;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:5px;text-transform:uppercase;letter-spacing:.05em;vertical-align:middle}
+
+/* PROGRESS BAR */
+.pbar{background:#e5e2dc;border-radius:99px;height:5px;margin-top:6px}
+.pbfill{height:5px;border-radius:99px;background:#C9A84C;transition:width .4s ease}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="badges">
+      <span class="badge bg-gold">Confidential</span>
+      <span class="badge bg-navy">PMO Command Center</span>
+      <span class="badge bg-green">Updated Apr 21</span>
+      <span class="badge bg-red">24 hrs to Deadline</span>
+    </div>
+    <div class="hdr-title">Project Broadway</div>
+    <div class="hdr-sub">Montefiore Shared Services &nbsp;&middot;&nbsp; AI-Native Revenue Cycle + Finance</div>
+  </div>
+  <div class="hdr-meta">
+    <div class="meta"><div class="ml">Content Deadline</div><div class="mv">Tomorrow &mdash; Apr 22</div></div>
+    <div class="meta"><div class="ml">Response Window</div><div class="mv">Late Apr / Early May</div></div>
+    <div class="meta"><div class="ml">FTE Scope</div><div class="mv">~425&ndash;550</div></div>
+    <div class="meta"><div class="ml">Pursuit Leads</div><div class="mv">John Lorette &amp; Anwesha Dutta</div></div>
+  </div>
+</div>
+
+<!-- BANNER -->
+<div class="banner">
+  <strong>Apr 21 &mdash; Final 24 hours:</strong> All content inputs due to Sheeba + Jagriti by EOD tomorrow, April 22. Architecture confirmed (Volt + Zora + Converge on AWS). McKinsey flagged as primary competitor. Tech Mahindra added to competitive watch list. FP&amp;A gap in motion &mdash; John connecting with Ravi Subbarayan.
+</div>
+
+<!-- TABS -->
+<div class="tabs" id="tabbar">
+  <button class="tab on" onclick="show('today',this)">Today's Priorities</button>
+  <button class="tab" onclick="show('ws',this)">Workstreams</button>
+  <button class="tab" onclick="show('oq',this)">Open Questions</button>
+  <button class="tab" onclick="show('tl',this)">Timeline</button>
+  <button class="tab" onclick="show('cl',this)">Daily Checklist</button>
+  <button class="tab" onclick="show('em',this)">Email Templates</button>
+  <button class="tab" onclick="show('ci',this)">Competitive Intel</button>
+  <button class="tab" onclick="show('ai',this)">AI Positioning</button>
+  <button class="tab" onclick="show('tr',this)">Full Team Roster</button>
+</div>
+
+<!-- TODAY -->
+<div class="panel on" id="p-today">
+  <div class="kgrid">
+    <div class="kpi"><div class="kl">Hours to Deadline</div><div class="kv" style="color:#a32020">~24</div><div class="ks">EOD Apr 22</div><div class="pbar"><div class="pbfill" style="width:90%"></div></div></div>
+    <div class="kpi"><div class="kl">Open Deliverables</div><div class="kv">10</div><div class="ks">All due tomorrow</div></div>
+    <div class="kpi"><div class="kl">Unresolved Blockers</div><div class="kv" style="color:#a32020">3</div><div class="ks">Need decisions today</div></div>
+    <div class="kpi"><div class="kl">FTE Scope Midpoint</div><div class="kv">~450</div><div class="ks">Rev Cycle + Finance</div></div>
+  </div>
+
+  <div class="al al-d"><div class="ah">Decision needed today &mdash; Rev Cycle AI capability gap</div><div class="am">Zora is strongest in Finance and Accounting. We do not have a clear answer on whether Zora extends to coding / HIM, or whether we lead with an Epic-native narrative for Revenue Cycle. This must be resolved before the Rev Cycle sections can be finalized. Owner: Maria Velanganni + Adarsh Gosu.</div></div>
+  <div class="al al-d"><div class="ah">Action needed today &mdash; Jupiter entry to unlock AWS letter</div><div class="am">Anwesha Dutta + Sheeba Stalin must create the Jupiter opportunity entry (nominal $) today to trigger the AWS letter of support process. This is on the critical path for the formal RFS submission.</div></div>
+  <div class="al al-d"><div class="ah">Decision needed today &mdash; Walkthrough Challenge asset verification</div><div class="am">Option C (Finance Reconciliation / Close) is the leading candidate. We need confirmation that Zora Autonomous Accountant demo assets exist before committing. If they do not exist, the build team must be assigned today. Owner: Solution Lead TBD.</div></div>
+  <div class="al al-w"><div class="ah">Owner needed today &mdash; Productivity bridge model</div><div class="am">Deloitte F&amp;A benchmarks show 25&ndash;40% productivity improvement. Montefiore targets 50%. That gap requires a named financial model with named levers. Working draft needed by tomorrow's integration session.</div></div>
+  <div class="al al-ok"><div class="ah">Resolved &mdash; Core architecture direction confirmed (Apr 17)</div><div class="am">Volt + Zora + Converge on AWS. Builds on Darshan team foundational work, supplemented by Deloitte healthcare and BPO operations depth. All content written today should ladder up to this.</div></div>
+  <div class="al al-i"><div class="ah">In motion &mdash; FP&amp;A gap being addressed</div><div class="am">Anwesha Dutta messaged Ravi Subbarayan (Operate Solution Hub Advisor) on Apr 17. John Lorette reaching out directly this week to connect on FP&amp;A integration into the Finance thread.</div></div>
+
+  <div class="sec">
+    <div class="sl">Tuesday integration session &mdash; what every team must bring</div>
+    <div class="g2">
+      <div class="card" style="border-left:4px solid #C9A84C;border-radius:0 10px 10px 0"><div class="ct">Core narrative (spine)</div><div style="font-size:12px;color:#666;line-height:1.6;margin-top:6px">Finance + Revenue Cycle lead the story. Each team arrives with a full solution overview &mdash; not rough slides. Articulate: what the solution is, how it fits Broadway's defined domains, and how it contributes to the integrated operating model.</div></div>
+      <div class="card" style="border-left:4px solid #a32020;border-radius:0 10px 10px 0"><div class="ct">Detail discipline &mdash; competitive risk</div><div style="font-size:12px;color:#666;line-height:1.6;margin-top:6px">McKinsey may retain access to Montefiore's transformation office. Keep all written content at architecture and outcomes level. No proprietary mechanics. If a sentence explains how Zora works internally &mdash; pull it back.</div></div>
+      <div class="card"><div class="ct">Appendix capabilities</div><div style="font-size:12px;color:#666;margin-top:6px">HR Operations &middot; Supply Chain &middot; Tax &middot; Care Management<br><br>1&ndash;3 focused slides each &mdash; what's possible, not detailed mechanics</div></div>
+      <div class="card"><div class="ct">Required narrative elements</div><ul style="font-size:12px;color:#666;padding-left:16px;line-height:2;margin-top:6px"><li>Ecosystem view &mdash; connected platform, not point solutions</li><li>Volt + Zora + Converge on AWS as structural backbone</li><li>Healthcare + BPO operations depth as differentiator</li><li>Multi-location, scalable delivery model</li><li>Outcomes and cost savings &mdash; not AI novelty</li></ul></div>
+    </div>
+  </div>
+</div>
+
+<!-- WORKSTREAMS -->
+<div class="panel" id="p-ws">
+  <div class="sl" style="margin-bottom:16px">All deliverables &mdash; due Apr 22</div>
+  <div class="g2">
+    <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div><div class="ct">Finance POV + Productivity Bridge</div><div class="cs">Prince McKinney / Ankit Gangwar</div></div><span class="ib ib-a">Today + Apr 22</span></div><ul class="tlist"><li class="ti"><span class="ib ib-a">!</span><span class="tx">Finance solution overview &mdash; ready for Tuesday integration session</span><span class="td">Tue</span></li><li class="ti"><span class="ib ib-a">!</span><span class="tx">Finance POV draft aligned to John's storyboard &mdash; in John's review queue</span><span class="td">Today</span></li><li class="ti"><span class="ib ib-x">&#9675;</span><span class="tx">Productivity bridge &mdash; Year 1 &rarr; Year 3 model with named levers, CBA assumptions</span><span class="td">Apr 22</span></li><li class="ti"><span class="ib ib-a">!</span><span class="tx">FP&amp;A support to be integrated &mdash; John connecting with Ravi Subbarayan</span><span class="td">This week</span></li></ul></div>
+    <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div><div class="ct">Platform Architecture &mdash; Volt + Zora + Converge</div><div class="cs">Adarsh Gosu / Zora Product</div></div><span class="ib ib-g">Partially resolved</span></div><ul class="tlist"><li class="ti"><span class="ib ib-g">&#10003;</span><span class="tx">Architecture confirmed: Volt, Zora, Converge on AWS. Builds on Darshan team work.</span><span class="td">Done</span></li><li class="ti"><span class="ib ib-g">&#10003;</span><span class="tx">Zora confirmed cloud-agnostic, AWS-compatible, no NVIDIA dependency</span><span class="td">Done</span></li><li class="ti"><span class="ib ib-x">&#9675;</span><span class="tx">Confirm Infor ERP integration story; Zora modules for Rev Cycle vs. Finance</span><span class="td">Apr 22</span></li><li class="ti"><span class="ib ib-r">!</span><span class="tx">Clarify deployment posture: client AWS vs. Deloitte SaaS vs. hybrid</span><span class="td">Apr 22</span></li></ul></div>
+    <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div><div class="ct">AWS Alliance + APN</div><div class="cs">Alliance Lead / Anwesha / Sheeba</div></div><span class="ib ib-r">Blocking &mdash; act today</span></div><ul class="tlist"><li class="ti"><span class="ib ib-g">&#10003;</span><span class="tx">Deloitte incumbent AWS Managed Services provider for Monte</span><span class="td">Done</span></li><li class="ti"><span class="ib ib-r">!</span><span class="tx">Create Jupiter opportunity entry (nominal $) to enable AWS letter &mdash; BLOCKING</span><span class="td">Today</span></li><li class="ti"><span class="ib ib-a">!</span><span class="tx">APN number still in progress &mdash; circulate when finalized</span><span class="td">ASAP</span></li><li class="ti"><span class="ib ib-x">&#9675;</span><span class="tx">Secure AWS letter of support (non-exclusive) for formal RFS submission</span><span class="td">Apr 22</span></li></ul></div>
+    <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div><div class="ct">Epic Integration Narrative</div><div class="cs">Maria Velanganni &mdash; Health Tech</div></div><span class="ib ib-a">Apr 22</span></div><ul class="tlist"><li class="ti"><span class="ib ib-x">&#9675;</span><span class="tx">1 slide + talking points: Zora / Converge complementary to Epic Wisdom / Aura / Ambient AI</span><span class="td">Apr 22</span></li><li class="ti"><span class="ib ib-r">!</span><span class="tx">Rev Cycle AI capability &mdash; Zora extensible to coding / HIM or Epic-native narrative? Decision today.</span><span class="td">Today</span></li><li class="ti"><span class="ib ib-x">&#9675;</span><span class="tx">Subra Sreepada + Jerry Bruno escalation to Epic Corp underway</span><span class="td">Aware</span></li></ul></div>
+    <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div><div class="ct">Tax Integration</div><div class="cs">Alicia Janisch / Ankit Gangwar</div></div><span class="ib ib-a">Apr 22</span></div><ul class="tlist"><li class="ti"><span class="ib ib-x">&#9675;</span><span class="tx">Coordinate with USI (Viraj / via Alicia) on offshore tax delivery model</span><span class="td">Apr 22</span></li><li class="ti"><span class="ib ib-x">&#9675;</span><span class="tx">Tax-finance bundle narrative + Highmark as precedent reference</span><span class="td">Apr 22</span></li><li class="ti"><span class="ib ib-x">&#9675;</span><span class="tx">Appendix-level tax capability overview (1&ndash;2 slides)</span><span class="td">Apr 22</span></li></ul></div>
+    <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div><div class="ct">GBS / Location + Secondary Scope</div><div class="cs">Bradley Podraza / Domain Leads</div></div><span class="ib ib-a">Apr 22</span></div><ul class="tlist"><li class="ti"><span class="ib ib-x">&#9675;</span><span class="tx">GBS: geographic delivery architecture (India GDN, nearshore, HIPAA constraints)</span><span class="td">Apr 22</span></li><li class="ti"><span class="ib ib-a">!</span><span class="tx">Jeff Petry: refresh supply chain appendix content (1&ndash;2 slides)</span><span class="td">Apr 22</span></li><li class="ti"><span class="ib ib-a">!</span><span class="tx">Brad Podraza absent Apr 17 &mdash; check in directly before Tuesday session</span><span class="td">Today</span></li></ul></div>
+    <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div><div class="ct">Walkthrough Challenge</div><div class="cs">Solution Lead TBD</div></div><span class="ib ib-r">Decide today</span></div><ul class="tlist"><li class="ti"><span class="ib ib-a">!</span><span class="tx">Confirm Option C (Finance Recon / Close) &mdash; verify Zora Autonomous Accountant demo assets exist</span><span class="td">Today</span></li><li class="ti"><span class="ib ib-x">&#9675;</span><span class="tx">If assets don't exist: assign build team today, not tomorrow</span><span class="td">Today</span></li><li class="ti"><span class="ib ib-x">&#9675;</span><span class="tx">Demo plan confirmed and rehearsed before client walkthrough</span><span class="td">TBD</span></li></ul></div>
+    <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div><div class="ct">Union / CBA + Content Consolidation</div><div class="cs">Anwesha / Rev Cycle + Finance / Sheeba + Jagriti</div></div><span class="ib ib-a">Apr 22</span></div><ul class="tlist"><li class="ti"><span class="ib ib-g">&#10003;</span><span class="tx">1199SEIU coverage confirmed: front-line + mid-level Finance roles covered; managers / directors excluded</span><span class="td">Done</span></li><li class="ti"><span class="ib ib-x">&#9675;</span><span class="tx">Union / CBA paragraph: augmentation framing, not displacement</span><span class="td">Apr 22</span></li><li class="ti"><span class="ib ib-x">&#9675;</span><span class="tx">Sheeba + Jagriti receive all inputs EOD Apr 22, begin consolidation Wed morning</span><span class="td">Apr 22</span></li></ul></div>
+  </div>
+</div>
+
+<!-- OPEN QUESTIONS -->
+<div class="panel" id="p-oq">
+  <div class="tw">
+    <table class="rt">
+      <thead><tr><th style="width:110px">Status</th><th style="width:230px">Question</th><th>Implication / Owner</th></tr></thead>
+      <tbody>
+        <tr><td><span class="ib ib-g">Resolved</span></td><td><strong>Zora hyperscaler dependency</strong></td><td style="color:#666">Cloud-agnostic, AWS-compatible, NVIDIA not required. Confirmed by Prince McKinney.</td></tr>
+        <tr><td><span class="ib ib-g">Resolved</span></td><td><strong>Core architecture direction</strong></td><td style="color:#666">Volt + Zora + Converge on AWS. Builds on Darshan team. Confirmed Apr 17.</td></tr>
+        <tr><td><span class="ib ib-g">Resolved</span></td><td><strong>1199SEIU union scope</strong></td><td style="color:#666">Front-line + mid-level Finance roles covered. Managers / directors excluded. Confirmed Janisch + Podraza, Apr 17.</td></tr>
+        <tr class="hl"><td><span class="ib ib-r">Blocker</span></td><td><strong>AWS APN + Jupiter entry <span class="nt">New</span></strong></td><td style="color:#a32020">Jupiter entry must be created today to unlock AWS letter. Owner: Anwesha / Sheeba. Without this the AWS letter cannot be secured in time.</td></tr>
+        <tr class="hl"><td><span class="ib ib-r">Blocker</span></td><td><strong>Rev Cycle AI capability story</strong></td><td style="color:#a32020">Zora strongest in F&amp;A. Extensible to coding / HIM, or Epic-native framing needed? Decision today. Owner: Maria + Adarsh.</td></tr>
+        <tr class="hl"><td><span class="ib ib-r">Decide today</span></td><td><strong>Walkthrough demo assets</strong></td><td style="color:#a32020">Option C pending asset verification. If assets don't exist, build team named today. Owner: Solution Lead TBD.</td></tr>
+        <tr><td><span class="ib ib-a">Needs model</span></td><td><strong>Productivity bridge 25&ndash;40% &rarr; 50%</strong></td><td style="color:#666">Financial model needed. Named levers, Year 1 &rarr; Year 3. Tax bundling + GDN + process redesign may close gap. Owner to confirm today.</td></tr>
+        <tr><td><span class="ib ib-a">In progress</span></td><td><strong>Zora deployment posture</strong></td><td style="color:#666">Client AWS vs. Deloitte SaaS vs. hybrid? Must be answered before finalizing platform narrative. Owner: Adarsh Gosu.</td></tr>
+        <tr><td><span class="ib ib-a">Risk</span></td><td><strong>McKinsey still engaged at Monte <span class="nt">New</span></strong></td><td style="color:#666">Bill Fera flagged McKinsey may retain access to Montefiore's transformation office. Keep all written content at architecture and outcomes level.</td></tr>
+        <tr><td><span class="ib ib-x">Intentional</span></td><td><strong>GenAI vendor positioning <span class="ut">Updated</span></strong></td><td style="color:#666">Anthropic, Palantir de-emphasized by design. Too early-stage for healthcare finance / RC. At most appendix-level mention.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- TIMELINE -->
+<div class="panel" id="p-tl">
+  <div class="g2">
+    <div>
+      <div class="sl">Pursuit milestones</div>
+      <div class="tl"><div class="tl-ln"></div>
+        <div class="tl-it"><div class="tl-dot d-go"></div><div class="tl-d">Friday, Apr 17</div><div class="tl-e">Alignment session &mdash; complete</div><div class="tl-x">Architecture confirmed. McKinsey risk flagged. Tech Mahindra added. 8 new action items logged.</div></div>
+        <div class="tl-it"><div class="tl-dot d-rd"></div><div class="tl-d">Today &mdash; Monday, Apr 21</div><div class="tl-e">Final build day &mdash; decisions and drafts</div><div class="tl-x">Jupiter entry, Rev Cycle AI decision, Walkthrough asset confirmation, and productivity bridge owner must all be named today.</div></div>
+        <div class="tl-it"><div class="tl-dot d-rd"></div><div class="tl-d">Tomorrow &mdash; Tuesday, Apr 22</div><div class="tl-e">Integration session + content deadline</div><div class="tl-x">John walks A-frame draft. Each team presents solution overview. Core vs. appendix finalized. All 10 inputs to Sheeba + Jagriti by EOD.</div></div>
+        <div class="tl-it"><div class="tl-dot d-am"></div><div class="tl-d">Wed&ndash;Thu, Apr 23&ndash;24</div><div class="tl-e">Consolidation + design polish begins</div><div class="tl-x">Sheeba + Jagriti consolidate inputs. Prince + John review integrated draft. Design support joins.</div></div>
+        <div class="tl-it"><div class="tl-dot d-am"></div><div class="tl-d">Late April</div><div class="tl-e">RFS response submitted to Montefiore</div><div class="tl-x">Full response delivered. AWS letter included once finalized.</div></div>
+        <div class="tl-it"><div class="tl-dot d-gy"></div><div class="tl-d">Early May</div><div class="tl-e">Solution Walkthrough Challenge</div><div class="tl-x">Option C &mdash; Finance Recon / Close. Zora Autonomous Accountant demo. On-camera: Prince McKinney. Live operational walkthrough, not a deck.</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="sl">Montefiore technology context</div>
+      <div class="tl"><div class="tl-ln"></div>
+        <div class="tl-it"><div class="tl-dot d-gn"></div><div class="tl-d">Now &mdash; complete</div><div class="tl-e">AWS migration largely complete</div><div class="tl-x">Monte's AWS environment live. Deloitte (McKinney) incumbent AWS Managed Services provider. Snowflake migration in progress.</div></div>
+        <div class="tl-it"><div class="tl-dot d-am"></div><div class="tl-d">In negotiation</div><div class="tl-e">Hippocratic AI contract pending</div><div class="tl-x">Final contract negotiations. Focused on communications + patient interaction workflows. Solution must remain platform-agnostic.</div></div>
+        <div class="tl-it"><div class="tl-dot d-am"></div><div class="tl-d">In flux</div><div class="tl-e">H2O.ai / AWS Bedrock decision</div><div class="tl-x">H2O.ai has existing pilots, mixed internal sentiment. AWS Bedrock under consideration. No single AI standard selected.</div></div>
+        <div class="tl-it"><div class="tl-dot d-gy"></div><div class="tl-d">~18 months out</div><div class="tl-e">NICE contact center platform</div><div class="tl-x">Not yet implemented. Expected to integrate with Epic MyChart. Flag in response to show forward-looking integration thinking.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKLIST -->
+<div class="panel" id="p-cl">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <div style="font-size:15px;font-weight:700;color:#1a1a18">Pre-Meeting Checklist &mdash; Apr 21 <span class="nt">Today</span></div>
+    <span id="prog">0 of 14 complete</span>
+  </div>
+  <div class="g2">
+    <div>
+      <div class="sl">Critical path &mdash; must happen today</div>
+      <div class="card">
+        <div class="cl" onclick="tick(this)"><div class="cb2"><span class="ck">&#10003;</span></div><div class="clt">Jupiter opportunity entry created &mdash; Anwesha / Sheeba (unblocks AWS letter)</div><span class="cp cp-h">Critical</span></div>
+        <div class="cl" onclick="tick(this)"><div class="cb2"><span class="ck">&#10003;</span></div><div class="clt">Rev Cycle AI capability decision confirmed &mdash; Maria + Adarsh own the answer</div><span class="cp cp-h">Today</span></div>
+        <div class="cl" onclick="tick(this)"><div class="cb2"><span class="ck">&#10003;</span></div><div class="clt">Walkthrough Option C &mdash; demo assets verified; build team named if assets don't exist</div><span class="cp cp-h">Today</span></div>
+        <div class="cl" onclick="tick(this)"><div class="cb2"><span class="ck">&#10003;</span></div><div class="clt">Productivity bridge owner confirmed &mdash; working draft by tomorrow morning</div><span class="cp cp-h">Today</span></div>
+        <div class="cl" onclick="tick(this)"><div class="cb2"><span class="ck">&#10003;</span></div><div class="clt">Finance POV draft confirmed in John's review queue</div><span class="cp cp-h">Today</span></div>
+        <div class="cl" onclick="tick(this)"><div class="cb2"><span class="ck">&#10003;</span></div><div class="clt">Brad Podraza briefed on Tuesday expectations (absent Friday)</div><span class="cp cp-m">Before Tue</span></div>
+        <div class="cl" onclick="tick(this)"><div class="cb2"><span class="ck">&#10003;</span></div><div class="clt">All functional leads confirmed for Tuesday &mdash; Finance, Rev Cycle, HR Ops, Supply Chain, Tax, Care Mgmt</div><span class="cp cp-m">Before Tue</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="sl">Today's meeting &mdash; talking points for Prince</div>
+      <div class="card">
+        <div class="cl" onclick="tick(this)"><div class="cb2"><span class="ck">&#10003;</span></div><div class="clt">John hands floor to Prince explicitly &mdash; message John before the meeting</div><span class="cp cp-h">First</span></div>
+        <div class="cl" onclick="tick(this)"><div class="cb2"><span class="ck">&#10003;</span></div><div class="clt">Establish urgency &mdash; tomorrow is the deadline, not end of week</div><span class="cp cp-h">Open with</span></div>
+        <div class="cl" onclick="tick(this)"><div class="cb2"><span class="ck">&#10003;</span></div><div class="clt">Anchor: Volt + Zora + Converge on AWS &mdash; the spine, not for relitigating</div><span class="cp cp-h">Anchor</span></div>
+        <div class="cl" onclick="tick(this)"><div class="cb2"><span class="ck">&#10003;</span></div><div class="clt">Raise: Rev Cycle AI capability gap &mdash; drive to a decision or named owner today</div><span class="cp cp-h">Raise</span></div>
+        <div class="cl" onclick="tick(this)"><div class="cb2"><span class="ck">&#10003;</span></div><div class="clt">Raise: Productivity bridge &mdash; name the owner, draft by tomorrow</div><span class="cp cp-m">Raise</span></div>
+        <div class="cl" onclick="tick(this)"><div class="cb2"><span class="ck">&#10003;</span></div><div class="clt">Reinforce: McKinsey risk &mdash; outcomes and architecture only, no proprietary mechanics in writing</div><span class="cp cp-m">Reinforce</span></div>
+        <div class="cl" onclick="tick(this)"><div class="cb2"><span class="ck">&#10003;</span></div><div class="clt">Close: name every owner and deadline out loud before dropping the call</div><span class="cp cp-l">Close with</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="al al-i" style="margin-top:18px"><div class="ah">Prince McKinney &mdash; facilitation note</div><div class="am">Message John before the meeting: "John &mdash; planning to run today's session as discussed. Would you mind opening with a quick word to the group that you'd like me to take point on facilitation going forward? Even 20 seconds sets the right dynamic." Once John hands it to you, don't thank him &mdash; just take the floor.</div></div>
+</div>
+
+<!-- EMAIL TEMPLATES -->
+<div class="panel" id="p-em">
+  <div class="ew">
+    <div class="eh"><span class="et">Daily Recap &mdash; Apr 21 (send today) <span class="nt">Ready</span></span><button class="cbtn" onclick="cp('e1',this)">Copy</button></div>
+    <div class="eb" id="e1">Subject: Project Broadway — Apr 21 Recap + What Moves Today
+
+Team,
+
+Quick recap from today's session and the specific items that must move before we hit the April 22 deadline tomorrow.
+
+TODAY'S KEY OUTCOMES
+• [Architecture / decisions made in today's meeting — fill in]
+• Rev Cycle AI capability: [resolved / still open — fill in owner and answer]
+• Walkthrough Option C assets: [confirmed / build team named — fill in]
+• Productivity bridge owner: [name confirmed]
+
+CRITICAL ACTIONS DUE TODAY
+🔴 Anwesha / Sheeba: Jupiter opportunity entry — must be created today to unlock the AWS letter process.
+🔴 [Solution Lead]: Option C demo asset verification — if assets don't exist, build team named today.
+🔴 [Owner]: Productivity bridge working model — draft due tomorrow morning for the integration session.
+
+ALL CONTENT INPUTS DUE TOMORROW EOD
+Every functional team submits to Sheeba and Jagriti by end of day Tuesday, April 22. They consolidate Wednesday morning. No late inputs.
+
+REMINDER — COMPETITIVE POSTURE
+McKinsey, NTT, Accenture, and Tech Mahindra are all in this pursuit. Keep all written content at architecture and outcomes level — not proprietary mechanics.
+
+Tomorrow's integration session: each team walks their solution overview. John presents the A-frame draft. We align on one unified story.
+
+Prince McKinney
+Finance SME + Pursuit Coordination — Project Broadway</div>
+  </div>
+  <div class="ew">
+    <div class="eh"><span class="et">Weekly Kickoff &mdash; Apr 21 (final push)</span><button class="cbtn" onclick="cp('e2',this)">Copy</button></div>
+    <div class="eb" id="e2">Subject: Project Broadway — Apr 21 | Final 24 Hours to Deadline + Open Items by Person
+
+Team,
+
+Hope everyone had a good weekend and came back ready to go — because we are officially in the final stretch.
+
+Our content deadline to Sheeba and Jagriti is tomorrow, Tuesday, April 22. Everything we produce today feeds directly into tomorrow's integration working session and ultimately into the Montefiore submission. We have one day. Let's make it count.
+
+——————————————————————————————
+SECTION 1 — GOALS & KEY ACTIVITIES TODAY AND TOMORROW
+——————————————————————————————
+
+• Finalize and submit all workstream content inputs to Sheeba and Jagriti by EOD tomorrow — no exceptions
+• Tuesday integration session: each team walks their solution overview; John presents the A-frame draft; we align on core narrative vs. appendix capability
+• Confirm the Walkthrough Challenge selection — Option C (Finance Reconciliation / Close) is leading; demo assets must be verified today
+• Resolve the Revenue Cycle AI capability gap today — clear answer on Zora's applicability needed before Rev Cycle sections can be finalized
+• Confirm the productivity bridge logic — named model, named levers, working draft by tomorrow morning
+• Keep all content at architecture and outcomes level — McKinsey, NTT, Accenture, and Tech Mahindra are all in this pursuit
+• Design support joins later this week; tomorrow is about getting the substance locked
+
+——————————————————————————————
+SECTION 2 — OPEN ITEMS BY PERSON | ALL DUE APR 22 UNLESS NOTED
+——————————————————————————————
+
+Prince McKinney + Ankit Gangwar
+• Finance POV draft — aligned to John's storyboard, in John's review queue [Due: Today]
+• Productivity bridge — Year 1 → Year 3 model with named levers, CBA / workforce transition cost assumptions [Due: Apr 22]
+
+Anwesha Dutta + Sheeba Stalin
+• Jupiter opportunity entry — must be created today to unlock AWS letter of support [Due: Today — BLOCKING]
+
+Bill Fera / Alliance Lead
+• APN number — confirm and circulate as soon as available [Due: ASAP]
+• AWS letter of support — finalize for inclusion in RFS submission [Due: Apr 22]
+
+Alicia Janisch + Ankit Gangwar
+• Tax integration inputs — offshore delivery model for tax-finance bundle [Due: Apr 22]
+• Tax appendix overview — 1–2 slides on the tax capability story [Due: Apr 22]
+
+Maria Velanganni
+• Epic integration narrative — 1 slide + talking points: Zora complementary to Epic [Due: Apr 22]
+• Rev Cycle AI capability answer — decision needed today
+
+Adarsh Gosu / Zora Product Team
+• Zora positioning and Infor ERP integration story [Due: Apr 22]
+• Deployment posture — client AWS, Deloitte SaaS, or hybrid? [Due: Apr 22]
+
+Bradley Podraza
+• GBS location strategy — 1–2 slides on geographic delivery architecture [Due: Apr 22]
+
+Jeff Petry + Swetha Bharti
+• Supply chain appendix content — 1–2 slides [Due: Apr 22]
+
+Solution Lead (to be confirmed today)
+• Walkthrough challenge — confirm Option C; verify Zora demo assets; assign build team if assets don't exist [Due: Today]
+
+All Functional Leads
+• Solution overview ready for tomorrow's integration session [Due: Tomorrow morning]
+
+——————————————————————————————
+
+All inputs to Sheeba and Jagriti by EOD tomorrow. Flag conflicts or dependencies today — not tomorrow morning.
+
+Let's finish strong.
+
+Prince McKinney
+Finance SME + Pursuit Coordination — Project Broadway</div>
+  </div>
+  <div class="ew">
+    <div class="eh"><span class="et">Daily Brief &mdash; Thread format</span><button class="cbtn" onclick="cp('e3',this)">Copy</button></div>
+    <div class="eb" id="e3">📋 BROADWAY DAILY BRIEF — [DATE]
+
+STATUS: [X] of 10 deliverables on track | Deadline: Apr 22 EOD
+
+🔴 BLOCKERS
+• Jupiter entry / APN: [Anwesha / Sheeba status]
+• Rev Cycle AI capability: [open / resolved]
+• Walkthrough assets: [confirmed / build team named]
+
+🟡 IN PROGRESS
+• Finance POV → John review: [status]
+• Productivity bridge: [owner / status]
+• Epic integration slide → Maria: [status]
+• AWS letter → Alliance Lead: [status]
+• Supply chain refresh → Jeff Petry: [status]
+
+🟢 CONFIRMED COMPLETE
+• Architecture direction (Volt + Zora + Converge on AWS) ✓
+• Zora cloud-agnostic / AWS-compatible ✓
+• 1199SEIU union scope research ✓
+
+📅 TODAY'S ASKS
+• [Name]: please confirm [action] by [time]
+
+⚠️ COMPETITIVE: Outcomes and architecture level only. McKinsey, NTT, Accenture, Tech Mahindra all in this pursuit.
+
+Next sync: [time / Teams link]</div>
+  </div>
+</div>
+
+<!-- COMPETITIVE INTEL -->
+<div class="panel" id="p-ci">
+  <div class="al al-d"><div class="ah">Bill Fera directive &mdash; detail discipline (apply to all written content)</div><div class="am">McKinsey may retain informal or formal access to Montefiore's transformation office. Every section writer should ask: "Is this detail that a competitor would benefit from seeing?" If yes, pull it back. Stay conceptual now &mdash; deep show-and-tell comes after selection signal.</div></div>
+  <div class="sec">
+    <div class="sl">Competitor watch list &mdash; updated Apr 17 (Anwesha Dutta)</div>
+    <div class="g2">
+      <div class="card" style="border-left:4px solid #a32020;border-radius:0 10px 10px 0"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="ct" style="color:#a32020">McKinsey <span class="nt">Primary threat</span></div><span class="ib ib-r">High risk</span></div><div style="font-size:12px;color:#666;line-height:1.5">May still be formally or informally engaged with Montefiore's transformation office. Focus on architecture + outcomes &mdash; not solution mechanics.</div></div>
+      <div class="card" style="border-left:4px solid #C97A20;border-radius:0 10px 10px 0"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="ct">NTT <span class="nt">Primary</span></div><span class="ib ib-a">High risk</span></div><div style="font-size:12px;color:#666;line-height:1.5">Identified alongside McKinsey as a primary competitor. Serious BPO + technology delivery threat. Deloitte differentiates on tax bundling, AWS incumbency, and proprietary Zora / Converge assets.</div></div>
+      <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="ct">Accenture</div><span class="ib ib-x">Secondary</span></div><div style="font-size:12px;color:#666">General competitive presence. Not viewed as the primary threat in this context.</div></div>
+      <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="ct">Tech Mahindra <span class="nt">Newly added</span></div><span class="ib ib-a">Watch</span></div><div style="font-size:12px;color:#666">Newly added to competitive watch list by Anwesha Dutta, Apr 17. Monitor positioning in this pursuit.</div></div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sl">Deloitte's four differentiators &mdash; no competitor has all four</div>
+    <div class="g4">
+      <div class="card"><div class="ct" style="margin-bottom:8px">Process depth</div><div style="font-size:12px;color:#666">End-to-end taxonomy across Rev Cycle + Finance. What tech-only firms lack.</div></div>
+      <div class="card"><div class="ct" style="margin-bottom:8px">Zora + Converge execution</div><div style="font-size:12px;color:#666">AI-native operating platform. Cloud-agnostic, AWS-compatible. Finance recon anchor.</div></div>
+      <div class="card"><div class="ct" style="margin-bottom:8px">Tax bundling</div><div style="font-size:12px;color:#666">No BPO or tech-co can bundle tax + finance. Highmark precedent. Alicia Janisch LSHC lead.</div></div>
+      <div class="card"><div class="ct" style="margin-bottom:8px">AWS incumbency</div><div style="font-size:12px;color:#666">Already selected as Monte's AWS Cloud Managed Services provider. Continuity, not a cold pitch.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- AI POSITIONING -->
+<div class="panel" id="p-ai">
+  <div class="g2" style="margin-bottom:18px">
+    <div class="card" style="border:2px solid #a8c8f0"><div class="ct" style="margin-bottom:12px">Core solution &mdash; lead with this</div><div style="display:flex;flex-direction:column;gap:10px;font-size:12px;line-height:1.5"><div><strong>AWS</strong> &mdash; foundational infrastructure layer. Anchor partner. Non-negotiable. Letter of support in progress.</div><div><strong>Zora AI</strong> &mdash; Deloitte-owned asset. Finance automation anchor (Autonomous Accountant). Embedded capability, not standalone tool.</div><div><strong>Converge</strong> &mdash; paired with Zora. Platform-enabled transformation story. Together: ecosystem, not point solutions.</div><div><strong>Volt</strong> &mdash; part of the platform stack on AWS. Builds on Darshan team foundational work.</div></div></div>
+    <div class="card"><div class="ct" style="margin-bottom:12px">De-emphasized &mdash; appendix only or not included</div><div style="display:flex;flex-direction:column;gap:10px;font-size:12px;color:#666;line-height:1.5"><div><strong style="color:#1a1a18">Anthropic</strong> &mdash; early-stage for healthcare finance / RC. Appendix only. Not woven into core narrative.</div><div><strong style="color:#1a1a18">Palantir</strong> &mdash; explicitly de-scoped. Existing work not Zora-based, too early-stage.</div><div><strong style="color:#1a1a18">Other GenAI vendors</strong> &mdash; global partnership mention at most. Not solution components.</div><div><strong style="color:#1a1a18">Invoicing</strong> &mdash; explicitly set aside by Prince. Not being positioned in this response.</div></div></div>
+  </div>
+  <div class="g2">
+    <div class="card" style="border-left:4px solid #2a6e30;border-radius:0 10px 10px 0"><div class="ct" style="color:#2a6e30;margin-bottom:8px">The story IS</div><ul style="font-size:12px;color:#666;padding-left:16px;line-height:2"><li>AI as an enabler of savings and operational outcomes</li><li>AI embedded in a platform + operations + BPO model</li><li>Zora and Converge as Deloitte differentiators, not vendor tools</li><li>AWS as the foundational layer; Deloitte value on top</li><li>Outcomes-first: cost savings, productivity, scalability</li></ul></div>
+    <div class="card" style="border-left:4px solid #a32020;border-radius:0 10px 10px 0"><div class="ct" style="color:#a32020;margin-bottom:8px">The story is NOT</div><ul style="font-size:12px;color:#666;padding-left:16px;line-height:2"><li>A vendor showdown (Anthropic vs. Palantir vs. others)</li><li>A deep technical architecture or model explanation</li><li>A cutting-edge "GenAI experiment" narrative</li><li>Proprietary mechanics or implementation how-to's</li><li>Invoicing (explicitly set aside)</li></ul></div>
+  </div>
+  <div class="al al-i" style="margin-top:16px"><div class="ah">Language guidance for all content writers</div><div class="am">Use: "ecosystem enablement," "platform + operating model," "AI-enabled savings," "Deloitte-owned capabilities," "built on AWS infrastructure." Avoid: deep model descriptions, specific API / integration mechanics, competitor product comparisons, and any language explaining how Zora or Converge works internally rather than what it enables.</div></div>
+</div>
+
+<!-- TEAM ROSTER -->
+<div class="panel" id="p-tr">
+  <div class="al al-d"><div class="ah">Competitors (Anwesha Dutta, Apr 17 chat)</div><div class="am">Accenture &nbsp;&middot;&nbsp; McKinsey (primary &mdash; may still be active at Montefiore) &nbsp;&middot;&nbsp; NTT (primary) &nbsp;&middot;&nbsp; Tech Mahindra (newly added)</div></div>
+  <div class="al al-w"><div class="ah">1199SEIU union coverage confirmed &mdash; Janisch + Podraza (Apr 17)</div><div class="am">Front-line and mid-level Finance roles (billing, coding, AP, financial counselors, clerical / admin) very likely covered. Managers, directors, and above typically excluded. No public documentation carves Finance staff out of 1199SEIU coverage.</div></div>
+
+  <div class="sec"><div class="sl">Finance &mdash; Pursuit Lead: John Lorette</div><div class="g3">
+    <div class="pc lep"><div class="av av-bl">JL</div><div><div class="pn">John Lorette</div><div class="pr">Pursuit Lead &middot; Finance LEP &middot; Storyboard + RFI framing</div><span class="pt t-lep">Pursuit Lead</span></div></div>
+    <div class="pc anchor"><div class="av av-gd">PM</div><div><div class="pn">Prince McKinney</div><div class="pr">Finance SME &middot; Pursuit Coordination &middot; AWS owner &middot; On-camera walkthrough lead</div><span class="pt t-cor">Finance SME</span></div></div>
+    <div class="pc"><div class="av av-sl">CO</div><div><div class="pn">Courtney</div><div class="pr">Finance Support</div></div></div>
+    <div class="pc"><div class="av av-tl">AG</div><div><div class="pn">Ankit Gangwar</div><div class="pr">Finance + Tax content &middot; USI &middot; Highmark precedent</div><span class="pt t-usi">USI</span></div></div>
+    <div class="pc"><div class="av av-pu">RS</div><div><div class="pn">Ravi Subbarayan</div><div class="pr">Operate Solution Hub Advisor &middot; FP&amp;A bridge &mdash; John reaching out</div><span class="pt t-new">FP&amp;A fix</span></div></div>
+  </div></div>
+
+  <div class="sec"><div class="sl">Revenue Cycle &mdash; LEP: Lauren O'Hanlon</div><div class="g3">
+    <div class="pc lep"><div class="av av-tl">LO</div><div><div class="pn">Lauren O'Hanlon</div><div class="pr">Revenue Cycle LEP</div><span class="pt t-lep">LEP</span></div></div>
+    <div class="pc"><div class="av av-co">MV</div><div><div class="pn">Maria Velanganni</div><div class="pr">Rev Cycle / Epic integration &middot; Epic AI roadmap &middot; KP union analog</div></div></div>
+    <div class="pc"><div class="av av-sl">UN</div><div><div class="pn">Unnati</div><div class="pr">Rev Cycle support &mdash; brought in by Lauren</div><span class="pt t-usi">USI</span></div></div>
+  </div></div>
+
+  <div class="sec"><div class="sl">Tax &mdash; LEP: Alicia Janisch</div><div class="g3">
+    <div class="pc lep"><div class="av av-am">AJ</div><div><div class="pn">Alicia Janisch</div><div class="pr">Tax LEP &middot; LSHC Green Dot &middot; Tax-finance bundling &middot; Union intel contributor</div><span class="pt t-lep">LEP</span></div></div>
+    <div class="pc"><div class="av av-sl">OS</div><div><div class="pn">Odalys Solares</div><div class="pr">Tax support</div></div></div>
+    <div class="pc"><div class="av av-sl">AB</div><div><div class="pn">Anthony Bellew</div><div class="pr">Tax support</div></div></div>
+    <div class="pc"><div class="av av-sl">RK</div><div><div class="pn">Rachel Kauffman</div><div class="pr">US Tax support</div></div></div>
+  </div></div>
+
+  <div class="sec"><div class="sl">Technology + AI &mdash; Monte Account LEP: Adarsh Gosu</div><div class="g3">
+    <div class="pc lep"><div class="av av-bl">AG</div><div><div class="pn">Adarsh Gosu</div><div class="pr">Monte Account LEP + SM Lead &middot; Platform strategy &middot; Zora positioning &middot; AWS partnership</div><span class="pt t-lep">LEP / SM</span></div></div>
+    <div class="pc"><div class="av av-sl">RS</div><div><div class="pn">Rahul Shaw</div><div class="pr">AI Guidance &middot; Monte account support</div></div></div>
+    <div class="pc"><div class="av av-sl">CD</div><div><div class="pn">Carolyn Donaldson</div><div class="pr">Monte account support</div></div></div>
+  </div></div>
+
+  <div class="sec"><div class="sl">AWS Alliance + Operate</div><div class="g3">
+    <div class="pc lep"><div class="av av-co">BF</div><div><div class="pn">Bill Fera</div><div class="pr">AWS Alliance Management LEP &middot; Detail discipline directive &middot; Story integrity</div><span class="pt t-lep">LEP</span></div></div>
+    <div class="pc"><div class="av av-sl">RJ</div><div><div class="pn">Russ Jesski</div><div class="pr">Epic + AWS Cloud Migration at Monte &middot; Supports Bill Fera</div></div></div>
+    <div class="pc lep"><div class="av av-am">SP</div><div><div class="pn">Sam Pearson</div><div class="pr">HPE Zora-enabled Finance Transformation Advisor &middot; Monte SNOW Operate LEP</div><span class="pt t-lep">LEP</span></div></div>
+  </div></div>
+
+  <div class="sec"><div class="sl">USI &mdash; Pursuit Lead: Anwesha Dutta &nbsp;|&nbsp; Lead Business Partners + Content</div><div class="g3">
+    <div class="pc lep anchor"><div class="av av-gn">AD</div><div><div class="pn">Anwesha Dutta</div><div class="pr">Pursuit Lead (USI) &middot; LCSP + LBP Consulting &middot; Union diligence &middot; Competitor list &middot; FP&amp;A coordination</div><span class="pt t-lep">Pursuit Lead</span></div></div>
+    <div class="pc lep"><div class="av av-bl">SS</div><div><div class="pn">Sumit Singhal</div><div class="pr">USI Lead Business Partner &middot; Involved from the start &middot; USI overall LBP</div><span class="pt t-usi">USI LBP</span></div></div>
+    <div class="pc"><div class="av av-tl">AC</div><div><div class="pn">Arnab Chaudhary</div><div class="pr">USI support &mdash; with Sumit from the beginning</div><span class="pt t-usi">USI</span></div></div>
+    <div class="pc"><div class="av av-sl">JK</div><div><div class="pn">Jagriti Kothari</div><div class="pr">Content consolidation co-lead</div><span class="pt t-usi">USI</span></div></div>
+    <div class="pc"><div class="av av-sl">SS2</div><div><div class="pn">Sheeba Stalin</div><div class="pr">Content consolidation co-lead &middot; Jupiter entry co-owner</div><span class="pt t-usi">USI</span></div></div>
+  </div></div>
+
+  <div class="sec"><div class="sl">GBS + IT Operate</div><div class="g3">
+    <div class="pc"><div class="av av-sl">BP</div><div><div class="pn">Bradley Podraza</div><div class="pr">GBS Advisor &middot; Location strategy &middot; Union intel contributor &middot; Absent Apr 17</div><span class="pt t-abs">Absent Apr 17</span></div></div>
+    <div class="pc"><div class="av av-pu">SR</div><div><div class="pn">Srinivas Sreepada</div><div class="pr">IT Operate Lead &mdash; Service Desk, AMS, EUS &middot; Code of silence aware</div></div></div>
+  </div></div>
+
+  <div class="sec"><div class="sl">Secondary Scope BPO Leads</div><div class="g3">
+    <div class="pc"><div class="av av-gn">JP</div><div><div class="pn">Jeff Petry</div><div class="pr">Zora-enabled Supply Chain BPO (US) &middot; Appendix content due Apr 22</div></div></div>
+    <div class="pc"><div class="av av-tl">SB</div><div><div class="pn">Swetha Bharti</div><div class="pr">Zora-enabled Supply Chain BPO (USI)</div><span class="pt t-usi">USI</span></div></div>
+    <div class="pc"><div class="av av-sl">SK</div><div><div class="pn">Sameer Khan</div><div class="pr">Zora-enabled HR BPO (US) &middot; Code of silence aware</div></div></div>
+    <div class="pc"><div class="av av-sl">NK</div><div><div class="pn">Nitin Kabra</div><div class="pr">Zora-enabled HR BPO (USI)</div><span class="pt t-usi">USI</span></div></div>
+  </div></div>
+
+  <div class="sec"><div class="sl">Code of silence aware &mdash; senior account leaders</div><div class="g4">
+    <div class="pc"><div class="av av-sl">JJ</div><div><div class="pn">Jimmy Joseph</div><div class="pr">Cyber Portfolio</div></div></div>
+    <div class="pc"><div class="av av-sl">SK</div><div><div class="pn">Sameer Khan</div><div class="pr">HR</div></div></div>
+    <div class="pc"><div class="av av-sl">RS</div><div><div class="pn">Raj Sengupta</div><div class="pr">Cloud</div></div></div>
+    <div class="pc"><div class="av av-sl">MK</div><div><div class="pn">Matt Kaye</div><div class="pr">Digital</div></div></div>
+  </div></div>
+</div>
+
+</div><!-- /app -->
+<script>
+function show(id,btn){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on')});
+  document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('on')});
+  document.getElementById('p-'+id).classList.add('on');
+  btn.classList.add('on');
+}
+function tick(item){
+  var b=item.querySelector('.cb2'),t=item.querySelector('.clt');
+  b.classList.toggle('on');t.classList.toggle('dn');
+  var tot=document.querySelectorAll('.cb2').length,dn=document.querySelectorAll('.cb2.on').length;
+  document.getElementById('prog').textContent=dn+' of '+tot+' complete';
+}
+function cp(id,btn){
+  var el=document.getElementById(id);
+  if(!el)return;
+  var txt=el.textContent||el.innerText;
+  function ok(){btn.textContent='Copied!';btn.classList.add('ok');setTimeout(function(){btn.textContent='Copy';btn.classList.remove('ok')},2000)}
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(txt).then(ok).catch(function(){fb(txt,ok)});
+  }else{fb(txt,ok)}
+}
+function fb(txt,cb){
+  var t=document.createElement('textarea');
+  t.value=txt;t.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0';
+  document.body.appendChild(t);t.focus();t.select();
+  try{document.execCommand('copy');cb()}catch(e){}
+  document.body.removeChild(t);
+}
+</script>
+</body>
+</html>
